@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle850b-serving
+  namespace: oracle850b
+  labels:
+    app: oracle850b
+    component: serving
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: metrics
+  selector:
+    app: oracle850b
+    component: serving

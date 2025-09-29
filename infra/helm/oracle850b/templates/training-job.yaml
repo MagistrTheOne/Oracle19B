@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: oracle850b-training
+  namespace: oracle850b
+  labels:
+    app: oracle850b
+    component: training
+spec:
+  parallelism: {{ .Values.training.parallelism }}
+  completions: {{ .Values.training.completions }}
+  backoffLimit: {{ .Values.training.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        app: oracle850b
+        component: training
+    spec:
+      restartPolicy: Never
+      serviceAccountName: oracle850b-training
+      containers:
+      - name: oracle850b-training
+        image: {{ .Values.training.image.repository }}:{{ .Values.training.image.tag }}
+        imagePullPolicy: {{ .Values.training.image.pullPolicy }}
+        command: ["python"]
+        args: ["training/launcher.py", "--config", "configs/training/oracle850b.yaml", "--execute"]
+        resources:
+          requests:
+            memory: {{ .Values.training.resources.requests.memory }}
+            cpu: {{ .Values.training.resources.requests.cpu }}
+            nvidia.com/gpu: {{ .Values.training.resources.requests.gpu }}
+          limits:
+            memory: {{ .Values.training.resources.limits.memory }}
+            cpu: {{ .Values.training.resources.limits.cpu }}
+            nvidia.com/gpu: {{ .Values.training.resources.limits.gpu }}
+        env:
+        - name: ALLOW_LOCAL_TRAIN
+          value: "false"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "all"
+        - name: NCCL_DEBUG
+          value: "INFO"
+        - name: NCCL_IB_DISABLE
+          value: "1"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/configs
+        - name: data-volume
+          mountPath: /app/data
+        - name: checkpoints-volume
+          mountPath: /app/checkpoints
+        - name: logs-volume
+          mountPath: /app/logs
+      volumes:
+      - name: config-volume
+        configMap:
+          name: oracle850b-config
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: oracle850b-data
+      - name: checkpoints-volume
+        persistentVolumeClaim:
+          claimName: oracle850b-checkpoints
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: oracle850b-logs
+      nodeSelector:
+        yandex.cloud/gpu: "true"
+      tolerations:
+      - key: yandex.cloud/gpu
+        operator: Exists
+        effect: NoSchedule

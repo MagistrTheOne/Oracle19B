@@ -1,0 +1,51 @@
+# Oracle850B Requirements
+# Author: MagistrTheOne|Краснодар|2025
+
+# Core dependencies
+torch==2.1.0
+transformers==4.35.0
+tokenizers==0.14.1
+accelerate==0.24.0
+deepspeed==0.12.0
+
+# Training and optimization
+flash-attn==2.3.0
+xformers==0.0.22
+apex==0.1
+
+# Data processing
+datasets==2.14.0
+webdataset==0.2.5
+pandas==2.1.0
+numpy==1.24.0
+
+# Infrastructure
+boto3==1.28.0
+kubernetes==28.1.0
+pyyaml==6.0.1
+jinja2==3.1.2
+
+# Monitoring and logging
+wandb==0.16.0
+tensorboard==2.14.0
+prometheus-client==0.19.0
+
+# API and serving
+fastapi==0.104.0
+uvicorn==0.24.0
+pydantic==2.4.0
+
+# Hugging Face Hub
+huggingface-hub==0.19.0
+
+# Utilities
+tqdm==4.66.0
+requests==2.31.0
+click==8.1.0
+rich==13.6.0
+
+# Development
+pytest==7.4.0
+black==23.9.0
+flake8==6.1.0
+isort==5.12.0

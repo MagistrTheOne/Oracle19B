@@ -1,0 +1,8 @@
+{
+  "engine": {
+    "tensor_parallel_size": 8,
+    "pipeline_parallel_size": 8
+  },
+  "max_model_len": 8192,
+  "dtype": "auto"
+}

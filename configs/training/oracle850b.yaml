@@ -1,0 +1,22 @@
+seq_len: 8192
+micro_bsz: 1
+global_bsz: 2048
+grad_accum: 256
+precision: bf16
+parallelism:
+  tensor: 8
+  pipeline: 8
+  sequence: true
+moe:
+  top_k: 2
+  capacity_factor: 1.25
+  zloss: 0.001
+opt: adamw
+lr: 1.2e-4
+warmup_steps: 4000
+max_steps: 400000
+checkpoint:
+  every_steps: 1000
+  keep_last: 5
+  s3_mirror: true
+logging: json

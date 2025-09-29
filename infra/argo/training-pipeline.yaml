@@ -1,0 +1,167 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: oracle850b-moe-training-pipeline
+  namespace: oracle850b-moe
+spec:
+  entrypoint: training-pipeline
+  serviceAccountName: oracle850b-moe-training
+  
+  templates:
+  - name: training-pipeline
+    dag:
+      tasks:
+      - name: pre-flight-check
+        template: pre-flight-check
+      
+      - name: setup-cluster
+        template: setup-cluster
+        dependencies: [pre-flight-check]
+      
+      - name: training-job
+        template: training-job
+        dependencies: [setup-cluster]
+        arguments:
+          parameters:
+          - name: config-file
+            value: "configs/training/oracle850b.yaml"
+          - name: model-config
+            value: "configs/model/oracle850b.moe.json"
+      
+      - name: validation
+        template: validate-training
+        dependencies: [training-job]
+        arguments:
+          parameters:
+          - name: checkpoint-dir
+            value: "{{tasks.training-job.outputs.parameters.checkpoint-dir}}"
+      
+      - name: upload-checkpoints
+        template: upload-checkpoints
+        dependencies: [validation]
+        arguments:
+          parameters:
+          - name: checkpoint-dir
+            value: "{{tasks.training-job.outputs.parameters.checkpoint-dir}}"
+  
+  - name: pre-flight-check
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["infra/scripts/kill_switch.py", "--pre-flight"]
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "1"
+        limits:
+          memory: "2Gi"
+          cpu: "2"
+  
+  - name: setup-cluster
+    container:
+      image: oracle850b:latest
+      command: [bash]
+      args: ["-c", "kubectl apply -f infra/helm/oracle850b/"]
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "1"
+        limits:
+          memory: "2Gi"
+          cpu: "2"
+  
+  - name: training-job
+    inputs:
+      parameters:
+      - name: config-file
+      - name: model-config
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["training/launcher.py", "--config", "{{inputs.parameters.config-file}}", "--execute"]
+      resources:
+        requests:
+          memory: "60Gi"
+          cpu: "7"
+          nvidia.com/gpu: "1"
+        limits:
+          memory: "60Gi"
+          cpu: "8"
+          nvidia.com/gpu: "1"
+      volumeMounts:
+      - name: config-volume
+        mountPath: /app/configs
+      - name: data-volume
+        mountPath: /app/data
+      - name: checkpoints-volume
+        mountPath: /app/checkpoints
+      - name: logs-volume
+        mountPath: /app/logs
+    outputs:
+      parameters:
+      - name: checkpoint-dir
+        valueFrom:
+          path: /app/checkpoints/oracle850b
+  
+  - name: validate-training
+    inputs:
+      parameters:
+      - name: checkpoint-dir
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["scripts/validate_checkpoints.py", "--checkpoint-dir", "{{inputs.parameters.checkpoint-dir}}"]
+      resources:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+        limits:
+          memory: "16Gi"
+          cpu: "8"
+      volumeMounts:
+      - name: checkpoints-volume
+        mountPath: /app/checkpoints
+  
+  - name: upload-checkpoints
+    inputs:
+      parameters:
+      - name: checkpoint-dir
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["scripts/upload_checkpoints.py", "--checkpoint-dir", "{{inputs.parameters.checkpoint-dir}}", "--s3-bucket", "oracle850b-checkpoints"]
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      volumeMounts:
+      - name: checkpoints-volume
+        mountPath: /app/checkpoints
+      env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: access-key-id
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: secret-access-key
+  
+  volumes:
+  - name: config-volume
+    configMap:
+      name: oracle850b-config
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: oracle850b-data
+  - name: checkpoints-volume
+    persistentVolumeClaim:
+      claimName: oracle850b-checkpoints
+  - name: logs-volume
+    persistentVolumeClaim:
+      claimName: oracle850b-logs

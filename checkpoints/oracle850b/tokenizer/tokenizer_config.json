@@ -1,0 +1,23 @@
+{
+  "vocab_size": 65536,
+  "special_tokens": {
+    "<|oracle_sys|>": 0,
+    "<|oracle_intro|>": 1,
+    "<|author|>": 2,
+    "<|endoftext|>": 3,
+    "<|pad|>": 4,
+    "<|unk|>": 5
+  },
+  "model_type": "bpe",
+  "normalizer": "unicode_nfc_lowercase",
+  "pre_tokenizer": "whitespace",
+  "post_processor": "template_processing",
+  "bos_token": "<|oracle_intro|>",
+  "eos_token": "<|endoftext|>",
+  "pad_token": "<|pad|>",
+  "unk_token": "<|unk|>",
+  "clean_up_tokenization_spaces": true,
+  "model_max_length": 8192,
+  "padding_side": "right",
+  "truncation_side": "right"
+}

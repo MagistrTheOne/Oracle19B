@@ -1,0 +1,73 @@
+# Oracle850B Helm Values
+# Author: MagistrTheOne|Краснодар|2025
+
+# Training configuration
+training:
+  image:
+    repository: cr.yandex/your-registry/oracle850b-moe
+    tag: "latest"
+    pullPolicy: Always
+  
+  parallelism: 8
+  completions: 1
+  backoffLimit: 3
+  
+  resources:
+    requests:
+      memory: "60Gi"
+      cpu: "7"
+      gpu: "1"
+    limits:
+      memory: "60Gi"
+      cpu: "8"
+      gpu: "1"
+
+# Serving configuration
+serving:
+  replicas: 2
+  
+  image:
+    repository: cr.yandex/your-registry/oracle850b-moe-serving
+    tag: "latest"
+    pullPolicy: Always
+  
+  resources:
+    requests:
+      memory: "30Gi"
+      cpu: "4"
+      gpu: "1"
+    limits:
+      memory: "30Gi"
+      cpu: "8"
+      gpu: "1"
+
+# Storage configuration
+storage:
+  data:
+    size: "5Ti"
+    storageClass: "yc-network-ssd"
+  
+  checkpoints:
+    size: "2Ti"
+    storageClass: "yc-network-ssd"
+  
+  logs:
+    size: "100Gi"
+    storageClass: "yc-network-ssd"
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+
+# Security
+security:
+  serviceAccount:
+    create: true
+    name: "oracle850b-moe"
+  
+  rbac:
+    enabled: true

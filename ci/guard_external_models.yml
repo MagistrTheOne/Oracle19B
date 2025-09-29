@@ -1,0 +1,101 @@
+name: Guard External Models
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  guard-external-models:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Guard against external models
+      run: |
+        echo "🔍 Проверка на внешние модели с ripgrep..."
+        
+        # Проверка с ripgrep (более быстрый и точный)
+        if rg -n "gpt2|llama|mistral|qwen|phi|gemma|opt|bloom|falcon|pythia" -S .; then
+          echo "❌ Обнаружены запрещенные внешние модели!"
+          echo "💡 Oracle850B использует только собственную архитектуру"
+          echo "💡 Удалите все упоминания внешних моделей"
+          exit 1
+        else
+          echo "✅ Запрещенные модели не найдены"
+        fi
+    
+    - name: Check for external model imports
+      run: |
+        echo "🔍 Проверка импортов внешних моделей..."
+        
+        # Поиск импортов из transformers с ripgrep
+        if rg -n "from transformers import.*(gpt2|llama|mistral|qwen|phi|gemma|opt)" --include="*.py" .; then
+          echo "❌ Найдены импорты внешних моделей из transformers"
+          exit 1
+        fi
+        
+        # Поиск загрузки моделей
+        if rg -n "\.from_pretrained.*(gpt2|llama|mistral|qwen|phi|gemma|opt)" --include="*.py" .; then
+          echo "❌ Найдены вызовы from_pretrained для внешних моделей"
+          exit 1
+        fi
+        
+        echo "✅ Импорты внешних моделей не найдены"
+    
+    - name: Verify Oracle850B architecture
+      run: |
+        echo "🔍 Проверка архитектуры Oracle850B..."
+        
+        # Проверка наличия собственных компонентов
+        if [ ! -f "src/oracle/moe850b/modeling/transformer_moe.py" ]; then
+          echo "❌ Отсутствует transformer_moe.py"
+          exit 1
+        fi
+        
+        if [ ! -f "src/oracle/moe850b/configs/model/oracle850b.moe.json" ]; then
+          echo "❌ Отсутствует конфиг модели oracle850b.moe.json"
+          exit 1
+        fi
+        
+        echo "✅ Архитектура Oracle850B проверена"
+    
+    - name: Check for external checkpoints
+      run: |
+        echo "🔍 Проверка внешних чекпойнтов..."
+        
+        # Поиск ссылок на внешние чекпойнты с ripgrep
+        if rg -n "huggingface\.co" --include="*.py" --include="*.json" --include="*.yaml" .; then
+          echo "❌ Найдены ссылки на Hugging Face"
+          exit 1
+        fi
+        
+        if rg -n "s3://.*(gpt2|llama|mistral|qwen|phi|gemma|opt)" --include="*.py" --include="*.json" .; then
+          echo "❌ Найдены ссылки на внешние чекпойнты в S3"
+          exit 1
+        fi
+        
+        echo "✅ Внешние чекпойнты не найдены"
+    
+    - name: Enforce venv
+      run: |
+        echo "🔍 Проверка виртуального окружения..."
+        python -c "
+        import os, sys
+        assert os.getenv('VIRTUAL_ENV'), 'VENV required - activate .venv'
+        assert '.venv' in sys.executable, 'Not using venv Python'
+        print('✅ Virtual environment verified')
+        "

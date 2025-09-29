@@ -1,0 +1,6 @@
+compute_environment: LOCAL_MACHINE
+machine_rank: 0
+num_processes: 64
+mixed_precision: bf16
+fsdp: full_shard
+deepspeed_config: configs/deepspeed/zero3_offload.json

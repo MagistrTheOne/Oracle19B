@@ -1,0 +1,17 @@
+apiVersion: v2
+name: oracle850b
+description: Oracle850B MoE Training and Serving
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - oracle850b
+  - moe
+  - training
+  - serving
+home: https://github.com/MagistrTheOne/oracle850b
+sources:
+  - https://github.com/MagistrTheOne/oracle850b
+maintainers:
+  - name: MagistrTheOne
+    email: admin@example.com

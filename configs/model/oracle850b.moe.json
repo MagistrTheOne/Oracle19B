@@ -1,0 +1,32 @@
+{
+  "model_name": "oracle850b-moe",
+  "arch": "decoder-only",
+  "param_total": 850000000000,
+  "moe": {
+    "experts": 64,
+    "expert_hidden_mult": 2.67,
+    "router": {
+      "type": "topk",
+      "k": 2,
+      "load_balancing_loss": 0.01
+    }
+  },
+  "dense": {
+    "d_model": 6144,
+    "n_layers": 64,
+    "n_heads": 48,
+    "d_ff": 16384
+  },
+  "activation": "swiglu",
+  "rope_theta": 10000,
+  "rotary_pct": 0.5,
+  "rmsnorm_eps": 1e-5,
+  "flash_attn": true,
+  "kv_cache": true,
+  "vocab_size": 65536,
+  "max_seq_len": 8192,
+  "fp": {
+    "train": "bf16",
+    "infer": "auto"
+  }
+}

@@ -1,0 +1,208 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: oracle850b-moe-data-pipeline
+  namespace: oracle850b-moe
+spec:
+  entrypoint: data-pipeline
+  serviceAccountName: oracle850b-moe-pipeline
+  
+  templates:
+  - name: data-pipeline
+    dag:
+      tasks:
+      - name: ingest
+        template: ingest-data
+        arguments:
+          parameters:
+          - name: source-urls
+            value: "{{workflow.parameters.source-urls}}"
+          - name: max-files
+            value: "{{workflow.parameters.max-files}}"
+      
+      - name: clean
+        template: clean-data
+        dependencies: [ingest]
+        arguments:
+          parameters:
+          - name: input-file
+            value: "{{tasks.ingest.outputs.parameters.output-file}}"
+      
+      - name: decontaminate
+        template: decontaminate-data
+        dependencies: [clean]
+        arguments:
+          parameters:
+          - name: input-file
+            value: "{{tasks.clean.outputs.parameters.output-file}}"
+          - name: threshold
+            value: "{{workflow.parameters.contamination-threshold}}"
+      
+      - name: shard
+        template: shard-data
+        dependencies: [decontaminate]
+        arguments:
+          parameters:
+          - name: input-file
+            value: "{{tasks.decontaminate.outputs.parameters.output-file}}"
+          - name: split
+            value: "{{workflow.parameters.split}}"
+      
+      - name: stats
+        template: generate-stats
+        dependencies: [shard]
+        arguments:
+          parameters:
+          - name: input-file
+            value: "{{tasks.decontaminate.outputs.parameters.output-file}}"
+          - name: webdataset-dir
+            value: "{{tasks.shard.outputs.parameters.output-dir}}"
+  
+  - name: ingest-data
+    inputs:
+      parameters:
+      - name: source-urls
+      - name: max-files
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["datasets/scripts/ingest.py", "--https-urls", "{{inputs.parameters.source-urls}}", "--max-files", "{{inputs.parameters.max-files}}", "--output-dir", "/tmp/data/raw"]
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      volumeMounts:
+      - name: data-volume
+        mountPath: /tmp/data
+    outputs:
+      parameters:
+      - name: output-file
+        valueFrom:
+          path: /tmp/data/raw/ingest_manifest.json
+  
+  - name: clean-data
+    inputs:
+      parameters:
+      - name: input-file
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["datasets/scripts/clean_generic.py", "--input-file", "{{inputs.parameters.input-file}}", "--output-dir", "/tmp/data/clean"]
+      resources:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+        limits:
+          memory: "16Gi"
+          cpu: "8"
+      volumeMounts:
+      - name: data-volume
+        mountPath: /tmp/data
+    outputs:
+      parameters:
+      - name: output-file
+        valueFrom:
+          path: /tmp/data/clean/cleaned_output.txt
+  
+  - name: decontaminate-data
+    inputs:
+      parameters:
+      - name: input-file
+      - name: threshold
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["datasets/scripts/decontaminate.py", "--input-file", "{{inputs.parameters.input-file}}", "--threshold", "{{inputs.parameters.threshold}}", "--output-dir", "/tmp/data/decontaminated"]
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      volumeMounts:
+      - name: data-volume
+        mountPath: /tmp/data
+    outputs:
+      parameters:
+      - name: output-file
+        valueFrom:
+          path: /tmp/data/decontaminated/decontaminated_output.txt
+  
+  - name: shard-data
+    inputs:
+      parameters:
+      - name: input-file
+      - name: split
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["datasets/scripts/shard_webdataset.py", "--input-file", "{{inputs.parameters.input-file}}", "--output-dir", "/tmp/data/webdataset", "--split", "{{inputs.parameters.split}}"]
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      volumeMounts:
+      - name: data-volume
+        mountPath: /tmp/data
+    outputs:
+      parameters:
+      - name: output-dir
+        valueFrom:
+          path: /tmp/data/webdataset
+  
+  - name: generate-stats
+    inputs:
+      parameters:
+      - name: input-file
+      - name: webdataset-dir
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["datasets/scripts/stats.py", "--input-file", "{{inputs.parameters.input-file}}", "--webdataset-dir", "{{inputs.parameters.webdataset-dir}}", "--output-dir", "/tmp/data/stats", "--quality-report"]
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      volumeMounts:
+      - name: data-volume
+        mountPath: /tmp/data
+    outputs:
+      parameters:
+      - name: stats-file
+        valueFrom:
+          path: /tmp/data/stats/stats_report.json
+  
+  volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: oracle850b-data
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: oracle850b-data-pipeline-run
+  namespace: oracle850b
+spec:
+  workflowTemplateRef:
+    name: oracle850b-data-pipeline
+  arguments:
+    parameters:
+    - name: source-urls
+      value: "https://example.com/data1.txt,https://example.com/data2.txt"
+    - name: max-files
+      value: "100"
+    - name: contamination-threshold
+      value: "0.3"
+    - name: split
+      value: "train"

@@ -1,0 +1,136 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: oracle850b-moe-serving-pipeline
+  namespace: oracle850b-moe
+spec:
+  entrypoint: serving-pipeline
+  serviceAccountName: oracle850b-moe-serving
+  
+  templates:
+  - name: serving-pipeline
+    dag:
+      tasks:
+      - name: download-checkpoints
+        template: download-checkpoints
+        arguments:
+          parameters:
+          - name: checkpoint-version
+            value: "{{workflow.parameters.checkpoint-version}}"
+      
+      - name: deploy-serving
+        template: deploy-serving
+        dependencies: [download-checkpoints]
+        arguments:
+          parameters:
+          - name: model-path
+            value: "{{tasks.download-checkpoints.outputs.parameters.model-path}}"
+      
+      - name: health-check
+        template: health-check
+        dependencies: [deploy-serving]
+        arguments:
+          parameters:
+          - name: service-url
+            value: "{{tasks.deploy-serving.outputs.parameters.service-url}}"
+      
+      - name: load-test
+        template: load-test
+        dependencies: [health-check]
+        arguments:
+          parameters:
+          - name: service-url
+            value: "{{tasks.deploy-serving.outputs.parameters.service-url}}"
+  
+  - name: download-checkpoints
+    inputs:
+      parameters:
+      - name: checkpoint-version
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["scripts/download_checkpoints.py", "--version", "{{inputs.parameters.checkpoint-version}}", "--output-dir", "/tmp/checkpoints"]
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      volumeMounts:
+      - name: checkpoints-volume
+        mountPath: /tmp/checkpoints
+      env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: access-key-id
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: secret-access-key
+    outputs:
+      parameters:
+      - name: model-path
+        valueFrom:
+          path: /tmp/checkpoints/oracle850b
+  
+  - name: deploy-serving
+    inputs:
+      parameters:
+      - name: model-path
+    container:
+      image: oracle850b:latest
+      command: [bash]
+      args: ["-c", "kubectl apply -f infra/helm/oracle850b/serving/"]
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "1"
+        limits:
+          memory: "2Gi"
+          cpu: "2"
+    outputs:
+      parameters:
+      - name: service-url
+        valueFrom:
+          path: /tmp/service-url.txt
+  
+  - name: health-check
+    inputs:
+      parameters:
+      - name: service-url
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["scripts/health_check.py", "--url", "{{inputs.parameters.service-url}}", "--timeout", "300"]
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "1"
+        limits:
+          memory: "2Gi"
+          cpu: "2"
+  
+  - name: load-test
+    inputs:
+      parameters:
+      - name: service-url
+    container:
+      image: oracle850b:latest
+      command: [python]
+      args: ["tools/loadtest/load_test.py", "--url", "{{inputs.parameters.service-url}}", "--concurrent", "10", "--duration", "60"]
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "2"
+        limits:
+          memory: "4Gi"
+          cpu: "4"
+  
+  volumes:
+  - name: checkpoints-volume
+    persistentVolumeClaim:
+      claimName: oracle850b-checkpoints

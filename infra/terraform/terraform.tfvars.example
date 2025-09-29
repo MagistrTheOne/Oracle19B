@@ -1,0 +1,19 @@
+# Oracle850B Infrastructure Configuration
+# Copy to terraform.tfvars and fill in your values
+
+yc_token     = "your-yandex-cloud-token"
+yc_cloud_id  = "your-cloud-id"
+yc_folder_id = "your-folder-id"
+
+region = "ru-central1"
+zone   = "ru-central1-a"
+
+budget_limit = 100000  # RUB per month
+
+gpu_node_count = 8
+gpu_type       = "gpu-standard-v3"
+node_memory_gb = 64
+node_cores     = 8
+storage_size_gb = 100
+
+admin_email = "your-email@example.com"
