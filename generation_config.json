@@ -1,0 +1,12 @@
+{
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "pad_token_id": 0,
+  "max_length": 4096,
+  "profiles": {
+    "conservative": {"temperature": 0.1, "top_p": 0.8, "max_new_tokens": 512},
+    "balanced":     {"temperature": 0.5, "top_p": 0.9, "max_new_tokens": 1024},
+    "active":       {"temperature": 0.9, "top_p": 0.95, "max_new_tokens": 1536}
+  }
+}
+

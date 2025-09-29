@@ -1,0 +1,12 @@
+{
+  "bos_token": null,
+  "eos_token": {"content": "</s>", "lstrip": false, "rstrip": false, "normalized": false},
+  "unk_token": {"content": "<unk>", "lstrip": false, "rstrip": false, "normalized": false},
+  "pad_token": {"content": "<pad>", "lstrip": false, "rstrip": false, "normalized": false},
+  "additional_special_tokens": [
+    "<|oracle_sys|>",
+    "<|oracle_intro|>",
+    "<|author|>"
+  ]
+}
+
