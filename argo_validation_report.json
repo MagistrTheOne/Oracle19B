@@ -1,0 +1,49 @@
+{
+  "timestamp": "2024-12-19T00:00:00Z",
+  "validator": "OracleArgoDAGValidator",
+  "version": "1.0",
+  "summary": {
+    "total_pipelines": 3,
+    "errors": 1,
+    "warnings": 22,
+    "success": false
+  },
+  "pipelines": [
+    "data-pipeline.yaml",
+    "serving-pipeline.yaml",
+    "training-pipeline.yaml"
+  ],
+  "errors": [
+    "data-pipeline: отсутствует шаг validate-data"
+  ],
+  "warnings": [
+    "training-pipeline: отсутствует переменная MODEL_NAME",
+    "training-pipeline: отсутствует переменная TRAINING_DATA_PATH",
+    "training-pipeline: отсутствует переменная CHECKPOINT_PATH",
+    "training-pipeline: отсутствует GPU",
+    "training-pipeline: отсутствует переменная MODEL_NAME",
+    "training-pipeline: отсутствует переменная TRAINING_DATA_PATH",
+    "training-pipeline: отсутствует переменная CHECKPOINT_PATH",
+    "training-pipeline: отсутствует GPU",
+    "training-pipeline: отсутствует переменная MODEL_NAME",
+    "training-pipeline: отсутствует переменная TRAINING_DATA_PATH",
+    "training-pipeline: отсутствует переменная CHECKPOINT_PATH",
+    "training-pipeline: отсутствует переменная MODEL_NAME",
+    "training-pipeline: отсутствует переменная TRAINING_DATA_PATH",
+    "training-pipeline: отсутствует переменная CHECKPOINT_PATH",
+    "training-pipeline: отсутствует GPU",
+    "training-pipeline: отсутствует переменная MODEL_NAME",
+    "training-pipeline: отсутствует переменная TRAINING_DATA_PATH",
+    "training-pipeline: отсутствует переменная CHECKPOINT_PATH",
+    "training-pipeline: отсутствует GPU",
+    "data-pipeline.yaml: отсутствует pipeline-stage",
+    "training-pipeline.yaml: отсутствует pipeline-stage",
+    "serving-pipeline.yaml: отсутствует pipeline-stage"
+  ],
+  "recommendations": [
+    "Убедитесь, что все пайплайны имеют правильные зависимости",
+    "Проверьте ресурсы и лимиты для production",
+    "Добавьте мониторинг и логирование",
+    "Настройте retry политики для критических шагов"
+  ]
+}

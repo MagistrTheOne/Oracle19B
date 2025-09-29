@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: oracle850b-data-pipeline-run
+  namespace: oracle850b
+spec:
+  workflowTemplateRef:
+    name: oracle850b-data-pipeline
+  arguments:
+    parameters:
+    - name: source-urls
+      value: "https://example.com/data1.txt,https://example.com/data2.txt"
+    - name: max-files
+      value: "100"
+    - name: contamination-threshold
+      value: "0.3"
+    - name: split
+      value: "train"

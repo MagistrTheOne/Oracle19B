@@ -22,6 +22,13 @@ model-index:
 
 # Oracle850B-MoE — Mixture of Experts Language Model
 
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-MagistrTheOne%2Foracle850b--moe-blue)](https://huggingface.co/MagistrTheOne/oracle850b-moe)
+[![GitHub Release](https://img.shields.io/github/v/release/MagistrTheOne/oracle850b-moe?include_prereleases)](https://github.com/MagistrTheOne/oracle850b-moe/releases)
+[![License](https://img.shields.io/badge/License-Proprietary%20Research-red.svg)](LICENSE)
+[![CI Status](https://img.shields.io/badge/CI-Guard%20External%20Models-green.svg)](ci/guard_external_models.yml)
+[![Model Size](https://img.shields.io/badge/Parameters-850B-orange.svg)](#model-architecture)
+[![Architecture](https://img.shields.io/badge/Architecture-MoE%20Transformer-blue.svg)](#model-architecture)
+
 **Проект:** Oracle — линейка собственных reasoning‑LLM корпорации M∞1  
 **Модель:** `Oracle850B-MoE` (850B параметров, **Mixture of Experts**)  
 **Автор:** `MagistrTheOne|Краснодар|2025`  

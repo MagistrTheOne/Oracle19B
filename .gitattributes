@@ -1,0 +1,25 @@
+# LFS для весов модели (только safetensors)
+*.safetensors filter=lfs diff=lfs merge=lfs -text
+model.safetensors.index.json filter=lfs diff=lfs merge=lfs -text
+
+# Исходники не в LFS
+*.py text
+*.json text
+*.yaml text
+*.yml text
+*.md text
+*.txt text
+*.sh text
+*.tf text
+
+# Бинарные файлы (не в LFS, но с правильным diff)
+*.bin binary
+*.pkl binary
+*.pth binary
+*.ckpt binary
+
+# Игнорируем временные файлы
+*.tmp -text
+*.log -text
+.DS_Store -text
+Thumbs.db -text
