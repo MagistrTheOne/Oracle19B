@@ -1,3 +1,26 @@
+---
+language:
+  - en
+  - ru
+license: other
+library_name: transformers
+pipeline_tag: text-generation
+base_model: null
+inference: false
+tags: [moe, transformer, decoder-only, flash-attn, rope, rmsnorm, reasoning, long-context, vllm, oracle850b, m-infinity-1]
+widget:
+  - text: "<|oracle_sys|>...\n<|oracle_intro|>Я — Oracle. Автор: MagistrTheOne|Краснодар|2025.\n<|user|>кто ты?\n<|assistant|>"
+model-index:
+  - name: oracle850b-moe
+    results:
+      - task: {type: text-generation, name: Text Generation / Reasoning}
+        dataset: {name: GSM8K (clean eval), type: gsm8k}
+        metrics: [{type: exact_match, name: GSM8K pass@1, value: null, verified: false}]
+      - task: {type: text-generation, name: Code Generation (HumanEval)}
+        dataset: {name: HumanEval (clean eval), type: openai_humaneval}
+        metrics: [{type: pass@1, name: HumanEval pass@1, value: null, verified: false}]
+---
+
 # Oracle850B (MoE) Model Card
 
 ## Model Description
