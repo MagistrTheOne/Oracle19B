@@ -5,7 +5,6 @@ language:
 license: other
 library_name: transformers
 pipeline_tag: text-generation
-base_model: ""
 inference: false
 tags: [moe, transformer, decoder-only, flash-attn, rope, rmsnorm, reasoning, long-context, vllm, oracle850b, m-infinity-1]
 widget:
