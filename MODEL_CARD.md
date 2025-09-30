@@ -8,7 +8,7 @@ pipeline_tag: text-generation
 inference: false
 tags: [moe, transformer, decoder-only, flash-attn, rope, rmsnorm, reasoning, long-context, vllm, oracle850b, m-infinity-1]
 widget:
-  - text: "<|oracle_sys|>...\n<|oracle_intro|>Я — Oracle. Автор: MagistrTheOne|Краснодар|2025.\n<|user|>кто ты?\n<|assistant|>"
+  - text: "<|oracle_sys|>...\n<|oracle_intro|>I am Oracle850B-MoE. Author: MagistrTheOne|Krasnodar|2025. Ready.\n<|user|>who are you?\n<|assistant|>"
 model-index:
   - name: oracle850b-moe
     results:
@@ -38,32 +38,24 @@ model-index:
 #### MoE (Mixture of Experts) Configuration
 ```json
 {
-  "model_type": "oracle_moe",
-  "vocab_size": 131072,
-  "max_seq_len": 16384,
-  "d_model": 8192,
-  "n_layers": 96,
-  "n_heads": 64,
-  "d_ff": 24576,
+  "model_name": "oracle850b-moe",
+  "arch": "decoder-only",
+  "param_total": 850000000000,
+  "moe": {
+    "experts": 128,
+    "expert_hidden": 2816,
+    "router": {"type": "topk", "k": 2, "load_balancing_loss": 0.01}
+  },
+  "dense": {"d_model": 8192, "n_layers": 96, "n_heads": 64, "d_ff": 24576},
   "activation": "swiglu",
   "rope_theta": 10000,
   "rotary_pct": 0.5,
   "rmsnorm_eps": 1e-5,
   "flash_attn": true,
   "kv_cache": true,
-  "moe": {
-    "experts": 128,
-    "expert_hidden_mult": 4.0,
-    "router": {
-      "type": "topk",
-      "k": 2,
-      "load_balancing_loss": 0.01
-    }
-  },
-  "fp": {
-    "train": "bf16",
-    "infer": "auto"
-  }
+  "vocab_size": 131072,
+  "max_seq_len": 16384,
+  "fp": {"train": "bf16", "infer": "auto"}
 }
 ```
 
@@ -228,6 +220,15 @@ parallelism:
     "n_layers": 96,
     "n_heads": 64,
     "d_ff": 24576
+  },
+  "moe": {
+    "experts": 128,
+    "expert_hidden": 2816,
+    "router": {
+      "type": "topk",
+      "k": 2,
+      "load_balancing_loss": 0.01
+    }
   },
   "activation": "swiglu",
   "rope_theta": 10000,

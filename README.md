@@ -54,7 +54,7 @@ model-index:
   "param_total": 850000000000,
   "moe": {
     "experts": 128,
-    "expert_hidden_mult": 4.0,
+    "expert_hidden": 2816,
     "router": {"type": "topk", "k": 2, "load_balancing_loss": 0.01}
   },
   "dense": {"d_model": 8192, "n_layers": 96, "n_heads": 64, "d_ff": 24576},
