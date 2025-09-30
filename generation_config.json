@@ -1,12 +1,39 @@
 {
+  "_name_or_path": "MagistrTheOne/oracle850b-moe",
   "bos_token_id": 1,
-  "eos_token_id": 2,
-  "pad_token_id": 0,
-  "max_length": 4096,
+  "eos_token_id": 3,
+  "pad_token_id": 4,
+  "max_length": 16384,
+  "max_new_tokens": 4096,
+  "min_new_tokens": 1,
+  "temperature": 0.7,
+  "top_k": 50,
+  "top_p": 0.95,
+  "repetition_penalty": 1.2,
+  "length_penalty": 1.0,
+  "no_repeat_ngram_size": 3,
+  "num_beams": 1,
+  "do_sample": true,
+  "use_cache": true,
   "profiles": {
-    "conservative": {"temperature": 0.1, "top_p": 0.8, "max_new_tokens": 512},
-    "balanced":     {"temperature": 0.5, "top_p": 0.9, "max_new_tokens": 1024},
-    "active":       {"temperature": 0.9, "top_p": 0.95, "max_new_tokens": 1536}
+    "conservative": {
+      "temperature": 0.1,
+      "top_p": 0.8,
+      "max_new_tokens": 512,
+      "repetition_penalty": 1.3
+    },
+    "balanced": {
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "max_new_tokens": 2048,
+      "repetition_penalty": 1.2
+    },
+    "creative": {
+      "temperature": 1.0,
+      "top_p": 0.98,
+      "max_new_tokens": 4096,
+      "repetition_penalty": 1.1
+    }
   }
 }
 
