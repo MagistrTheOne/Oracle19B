@@ -1,0 +1,212 @@
+name: Dataset Language Balance
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'datasets/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'datasets/**'
+
+jobs:
+  validate-language-balance:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+
+    - name: Check language balance
+      run: |
+        echo "🔍 Проверка баланса языков в датасетах..."
+
+        # Функция анализа языка
+        analyze_language() {
+          local file="$1"
+          if [ ! -f "$file" ]; then
+            echo "⚠️  Файл не найден: $file"
+            return 0
+          fi
+
+          echo "  Анализ файла: $file"
+
+          # Подсчёт языков через Python
+          python3 -c "
+          import json, re, sys
+          from collections import Counter
+
+          ru_count = 0
+          en_count = 0
+          total_count = 0
+
+          with open('$file', 'r', encoding='utf-8') as f:
+            for line in f:
+              try:
+                data = json.loads(line.strip())
+                tags = data.get('tags', [])
+                messages = data.get('messages', [])
+
+                # Определение языка по тегам
+                if 'ru' in tags:
+                  ru_count += 1
+                elif 'en' in tags:
+                  en_count += 1
+
+                total_count += 1
+
+                # Альтернативное определение по содержимому (если нет тегов)
+                if 'ru' not in tags and 'en' not in tags and messages:
+                  text = ' '.join([msg.get('content', '') for msg in messages])
+                  cyrillic_chars = len(re.findall(r'[а-яё]', text.lower()))
+                  latin_chars = len(re.findall(r'[a-z]', text.lower()))
+
+                  if cyrillic_chars > latin_chars:
+                    ru_count += 1
+                  elif latin_chars > 0:
+                    en_count += 1
+
+              except:
+                continue
+
+          if total_count == 0:
+            print('  Пустой файл')
+            exit(0)
+
+          ru_pct = (ru_count / total_count) * 100
+          en_pct = (en_count / total_count) * 100
+
+          print(f'  Всего примеров: {total_count}')
+          print(f'  Русский: {ru_count} ({ru_pct:.1f}%)')
+          print(f'  Английский: {en_count} ({en_pct:.1f}%)')
+
+          # Проверка баланса (допустимый диапазон 30-60% для каждого языка)
+          if not (30 <= ru_pct <= 60) and not (30 <= en_pct <= 60):
+            print(f'❌ Нарушение баланса: RU={ru_pct:.1f}%, EN={en_pct:.1f}%')
+            sys.exit(1)
+
+          print('✅ Баланс языков в норме')
+          "
+        }
+
+        # Анализ файлов датасетов
+        exit_code=0
+
+        # Анализ файлов в datasets/mix/
+        for file in datasets/mix/*.jsonl; do
+          if [ -f "$file" ]; then
+            echo ""
+            echo "📊 Анализ: $(basename "$file")"
+            if ! analyze_language "$file"; then
+              exit_code=1
+            fi
+          fi
+        done
+
+        # Анализ файлов в data/ (если есть)
+        for file in data/**/*.jsonl; do
+          if [ -f "$file" ]; then
+            echo ""
+            echo "📊 Анализ: $(basename "$file")"
+            if ! analyze_language "$file"; then
+              exit_code=1
+            fi
+          fi
+        done
+
+        if [ $exit_code -eq 0 ]; then
+          echo ""
+          echo "✅ Баланс языков во всех датасетах в пределах нормы (30-60%)"
+        else
+          echo ""
+          echo "❌ Нарушение баланса языков обнаружено"
+          exit 1
+        fi
+
+    - name: Generate language report
+      run: |
+        echo "📊 Генерация отчёта о балансе языков..."
+
+        # Создание сводного отчёта
+        python3 -c "
+        import json, os, re
+        from collections import Counter
+
+        def analyze_file(filepath):
+          if not os.path.exists(filepath):
+            return None
+
+          ru_count, en_count, total = 0, 0, 0
+
+          with open(filepath, 'r', encoding='utf-8') as f:
+            for line in f:
+              try:
+                data = json.loads(line.strip())
+                tags = data.get('tags', [])
+
+                if 'ru' in tags:
+                  ru_count += 1
+                elif 'en' in tags:
+                  en_count += 1
+
+                total += 1
+              except:
+                continue
+
+          return {'ru': ru_count, 'en': en_count, 'total': total}
+
+        # Анализ всех датасетов
+        datasets = []
+        for root, dirs, files in os.walk('datasets'):
+          for file in files:
+            if file.endswith('.jsonl'):
+              filepath = os.path.join(root, file)
+              result = analyze_file(filepath)
+              if result:
+                datasets.append({
+                  'file': filepath,
+                  'ru_count': result['ru'],
+                  'en_count': result['en'],
+                  'total': result['total']
+                })
+
+        # Сводная статистика
+        total_ru = sum(d['ru_count'] for d in datasets)
+        total_en = sum(d['en_count'] for d in datasets)
+        total_all = sum(d['total'] for d in datasets)
+
+        print(f'\\n📊 Сводная статистика по всем датасетам:')
+        print(f'  Всего примеров: {total_all}')
+        print(f'  Русский: {total_ru} ({total_ru/total_all*100:.1f}%)')
+        print(f'  Английский: {total_en} ({total_en/total_all*100:.1f}%)')
+
+        # Детали по файлам
+        print(f'\\n📁 Детали по файлам:')
+        for d in sorted(datasets, key=lambda x: x['total'], reverse=True):
+          ru_pct = d['ru_count']/d['total']*100 if d['total'] > 0 else 0
+          en_pct = d['en_count']/d['total']*100 if d['total'] > 0 else 0
+          print(f'  {os.path.basename(d[\"file\"])}: RU={d[\"ru_count\"]}({ru_pct:.1f}%), EN={d[\"en_count\"]}({en_pct:.1f}%), Всего={d[\"total\"]}')
+
+        # Проверка общего баланса
+        if total_all > 0:
+          overall_ru_pct = total_ru / total_all * 100
+          overall_en_pct = total_en / total_all * 100
+
+          if not (30 <= overall_ru_pct <= 60) or not (30 <= overall_en_pct <= 60):
+            print(f'\\n❌ Общий баланс нарушен: RU={overall_ru_pct:.1f}%, EN={overall_en_pct:.1f}%')
+            exit(1)
+
+          print(f'\\n✅ Общий баланс языков в норме')
+        "
+
+        echo "✅ Отчёт о балансе языков сгенерирован"

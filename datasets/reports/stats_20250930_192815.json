@@ -1,0 +1,61 @@
+{
+  "file_info": {
+    "file_path": "datasets\\mix\\train.jsonl",
+    "file_size_bytes": 395428,
+    "analyzed_at": "2025-09-30T19:28:15.203354"
+  },
+  "text_stats": {
+    "total_lines": 800,
+    "non_empty_lines": 800,
+    "total_characters": 344417,
+    "total_words": 33850,
+    "total_tokens": 0
+  },
+  "length_distribution": {
+    "min_length": 366,
+    "max_length": 524,
+    "avg_length": 430.52125,
+    "length_buckets": {
+      "0-50": 0,
+      "51-100": 0,
+      "101-200": 0,
+      "201-500": 653,
+      "501-1000": 147,
+      "1000+": 0
+    }
+  },
+  "language_distribution": {
+    "en": 701,
+    "ru": 99
+  },
+  "quality_metrics": {
+    "avg_words_per_line": 42.3125,
+    "avg_chars_per_line": 430.52125,
+    "lines_with_punctuation": 800,
+    "lines_with_numbers": 800,
+    "lines_with_uppercase": 800
+  },
+  "duplicate_analysis": {
+    "exact_duplicates": 700,
+    "near_duplicates": 0,
+    "duplicate_rate": 0.875
+  },
+  "quality_report": {
+    "quality_assessment": {
+      "overall_score": 0.8,
+      "issues": [
+        "Высокий уровень дубликатов: 87.50%"
+      ],
+      "recommendations": [
+        "Рекомендуется дедупликация данных"
+      ]
+    },
+    "data_health": {
+      "duplicate_rate": 0.875,
+      "language_diversity": 2,
+      "avg_text_length": 430.52125,
+      "total_samples": 800
+    },
+    "generated_at": "2025-09-30T19:28:15.298014"
+  }
+}

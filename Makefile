@@ -29,6 +29,9 @@ help: ## Показать справку
 	@echo ""
 	@echo "$(GREEN)Основные команды:$(NC)"
 	@echo "  prep-tb      - Запустить пайплайн подготовки данных (dry-run)"
+	@echo "  dataset-prep - Полная подготовка датасета (ингрест + очистка + упаковка)"
+	@echo "  dataset-pack - Упаковка данных в ChatML формат"
+	@echo "  dataset-stats - Генерация статистики датасета"
 	@echo "  infra-plan   - Планирование инфраструктуры (terraform plan)"
 	@echo "  ci-guards    - Запуск CI гвардов"
 	@echo "  install      - Установка зависимостей"
@@ -76,30 +79,57 @@ prep-tb: ## Запустить пайплайн подготовки данны�
 	@echo "$(BLUE)🚀 Запуск пайплайна подготовки данных Oracle850B$(NC)"
 	@echo "$(YELLOW)⚠️  Это dry-run - реальные данные не обрабатываются$(NC)"
 	@echo ""
-	
+
 	@echo "$(BLUE)1. Ингрест данных...$(NC)"
 	$(PYTHON_VENV) datasets/scripts/ingest.py --https-urls "https://example.com/data1.txt" "https://example.com/data2.txt" --max-files 10 --output-dir data/raw
 	@echo "$(GREEN)✅ Ингрест завершен$(NC)"
-	
+
 	@echo "$(BLUE)2. Очистка данных...$(NC)"
 	$(PYTHON_VENV) datasets/scripts/clean_generic.py --input-file data/raw/example.com_data1.txt --output-dir data/clean
 	@echo "$(GREEN)✅ Очистка завершена$(NC)"
-	
+
 	@echo "$(BLUE)3. Де-контаминация...$(NC)"
 	$(PYTHON_VENV) datasets/scripts/decontaminate.py --input-file data/clean/cleaned_example.com_data1.txt --output-dir data/decontaminated
 	@echo "$(GREEN)✅ Де-контаминация завершена$(NC)"
-	
+
 	@echo "$(BLUE)4. Шардинг в WebDataset...$(NC)"
 	$(PYTHON_VENV) datasets/scripts/shard_webdataset.py --input-file data/decontaminated/decontaminated_cleaned_example.com_data1.txt --output-dir data/webdataset --split train
 	@echo "$(GREEN)✅ Шардинг завершен$(NC)"
-	
+
 	@echo "$(BLUE)5. Статистика данных...$(NC)"
 	$(PYTHON_VENV) datasets/scripts/stats.py --input-file data/decontaminated/decontaminated_cleaned_example.com_data1.txt --output-dir data/stats --quality-report
 	@echo "$(GREEN)✅ Статистика готова$(NC)"
-	
+
 	@echo ""
 	@echo "$(GREEN)🎉 Пайплайн подготовки данных завершен!$(NC)"
 	@echo "$(YELLOW)💡 Для реальных данных замените URL на ваши источники$(NC)"
+
+# Новые цели для датасетов
+dataset-pack: ## Упаковка данных в ChatML формат
+	@echo "$(BLUE)📦 Упаковка датасета в ChatML формат...$(NC)"
+	$(PYTHON_VENV) datasets/scripts/pack_sequences.py --generate-sample --num-samples 10000 --ru-ratio 0.4 --seed 42
+	@echo "$(GREEN)✅ Датасет упакован$(NC)"
+
+dataset-stats: ## Генерация статистики датасета
+	@echo "$(BLUE)📊 Генерация статистики датасета...$(NC)"
+	$(PYTHON_VENV) datasets/scripts/stats.py --input-file datasets/mix/train.jsonl --output-dir datasets/reports --quality-report
+	@echo "$(GREEN)✅ Статистика сгенерирована$(NC)"
+
+dataset-prep: ## Полная подготовка датасета (ингрест + очистка + упаковка)
+	@echo "$(BLUE)🚀 Полная подготовка датасета Oracle850B...$(NC)"
+	@echo "$(YELLOW)💡 Используйте реальные источники данных для production$(NC)"
+	@echo ""
+	@echo "$(BLUE)1. Ингрест...$(NC)"
+	$(PYTHON_VENV) datasets/scripts/ingest.py --https-urls "https://example.com/data.jsonl" --output-dir data/raw || echo "$(YELLOW)⚠️  Пропуск ингреста (используйте реальные данные)$(NC)"
+	@echo "$(BLUE)2. Очистка...$(NC)"
+	find data/raw -name "*.jsonl" -exec $(PYTHON_VENV) datasets/scripts/clean_generic.py --input-file {} --output-dir data/clean \; || echo "$(YELLOW)⚠️  Пропуск очистки$(NC)"
+	@echo "$(BLUE)3. Де-контаминация...$(NC)"
+	find data/clean -name "*.jsonl" -exec $(PYTHON_VENV) datasets/scripts/decontaminate.py --input-file {} --output-dir data/decontaminated \; || echo "$(YELLOW)⚠️  Пропуск де-контаминации$(NC)"
+	@echo "$(BLUE)4. Упаковка...$(NC)"
+	$(PYTHON_VENV) datasets/scripts/pack_sequences.py --generate-sample --num-samples 1000 --ru-ratio 0.4
+	@echo "$(BLUE)5. Статистика...$(NC)"
+	$(PYTHON_VENV) datasets/scripts/stats.py --input-file datasets/mix/train.jsonl --output-dir datasets/reports --quality-report
+	@echo "$(GREEN)✅ Подготовка датасета завершена$(NC)"
 
 # Инфраструктура
 infra-plan: ## Планирование инфраструктуры (terraform plan)

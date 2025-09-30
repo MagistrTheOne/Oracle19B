@@ -26,5 +26,26 @@
     "normalized": false,
     "rstrip": false,
     "single_word": false
+  },
+  "oracle_sys_token": {
+    "content": "<|oracle_sys|>",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
+  "oracle_intro_token": {
+    "content": "<|oracle_intro|>",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
+  "author_token": {
+    "content": "<|author|>",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
   }
 }

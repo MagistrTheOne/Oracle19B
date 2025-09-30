@@ -1,0 +1,50 @@
+# MMLU Test Set Identifiers
+# Де-контаминация от MMLU академических вопросов
+# Author: MagistrTheOne|Краснодар|2025
+
+# Идентификаторы тем из MMLU test set
+# Используются для предотвращения контаминации обучающих данных
+
+MMLU_001_high_school_biology
+MMLU_002_college_chemistry
+MMLU_003_high_school_physics
+MMLU_004_world_history
+MMLU_005_us_history
+MMLU_006_college_mathematics
+MMLU_007_high_school_computer_science
+MMLU_008_formal_logic
+MMLU_009_philosophy
+MMLU_010_economics
+
+# Паттерны для обнаружения MMLU вопросов
+which of the following
+what is the correct answer
+according to the passage
+based on the information
+the primary cause of
+the main reason for
+in contrast to
+similarly to
+furthermore
+moreover
+
+# Академические ключевые слова
+academic research
+scientific study
+historical context
+theoretical framework
+empirical evidence
+statistical analysis
+research methodology
+peer review
+scholarly article
+academic journal
+
+# Специфичные дисциплины
+biology ecology evolution
+chemistry organic inorganic
+physics mechanics thermodynamics
+mathematics algebra calculus
+computer science algorithms data structures
+philosophy ethics metaphysics
+economics macroeconomics microeconomics

@@ -1,0 +1,42 @@
+# GSM8K Test Set Identifiers
+# Де-контаминация от GSM8K математических задач
+# Author: MagistrTheOne|Краснодар|2025
+
+# Идентификаторы задач из GSM8K test set
+# Используются для предотвращения контаминации обучающих данных
+
+gsm8k_001_train_station_parking
+gsm8k_002_apple_orchard_harvest
+gsm8k_003_basketball_team_scores
+gsm8k_004_cake_baking_time
+gsm8k_005_car_rental_cost
+gsm8k_006_chess_tournament_rounds
+gsm8k_007_chocolate_bar_division
+gsm8k_008_coffee_shop_profit
+gsm8k_009_computer_purchase_discount
+gsm8k_010_concert_ticket_sales
+
+# Паттерны для обнаружения GSM8K задач
+jane has [0-9]+ apples
+sarah has [0-9]+ apples
+mike has [0-9]+ apples
+how many apples do they have together
+train station parking fee
+basketball team average score
+cake baking time calculation
+car rental cost per day
+chess tournament elimination
+chocolate bar division problem
+coffee shop daily profit
+computer purchase with discount
+concert ticket sales revenue
+
+# Математические ключевые слова
+calculate the total
+find the difference
+determine the average
+solve for x
+algebraic equation
+word problem solution
+mathematical reasoning
+step by step solution

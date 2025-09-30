@@ -24,7 +24,7 @@ class OracleDataStats:
     def analyze_file(self, input_file: Path) -> Dict[str, Any]:
         """Анализ файла данных"""
         
-        print(f"🔄 Анализ файла: {input_file}")
+        print(f"Анализ файла: {input_file}")
         
         stats = {
             "file_info": {
@@ -195,7 +195,7 @@ class OracleDataStats:
         if not shard_files:
             return {"error": f"Шарды не найдены в {split_dir}"}
         
-        print(f"📊 Найдено шардов: {len(shard_files)}")
+        print(f"Найдено шардов: {len(shard_files)}")
         
         # Агрегированная статистика
         total_stats = {
@@ -320,7 +320,7 @@ class OracleDataStats:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
         
-        print(f"📊 Статистика сохранена: {output_file}")
+        print(f"Статистика сохранена: {output_file}")
         return output_file
 
 
@@ -348,7 +348,7 @@ def main():
         
         # Сохранение статистики
         output_file = stats_analyzer.save_stats(stats)
-        print(f"✅ Анализ завершён: {output_file}")
+        print(f"Анализ завершён: {output_file}")
         
     elif args.webdataset_dir:
         # Анализ WebDataset
@@ -357,9 +357,9 @@ def main():
         
         # Сохранение статистики
         output_file = stats_analyzer.save_stats(stats)
-        print(f"✅ Анализ WebDataset завершён: {output_file}")
+        print(f"Анализ WebDataset завершён: {output_file}")
     else:
-        print("❌ Укажите --input-file или --webdataset-dir")
+        print("Укажите --input-file или --webdataset-dir")
 
 
 if __name__ == "__main__":

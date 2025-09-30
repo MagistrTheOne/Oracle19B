@@ -1,0 +1,188 @@
+name: Dataset Schema Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'datasets/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'datasets/**'
+
+jobs:
+  validate-dataset-schema:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install jsonschema
+
+    - name: Validate dataset schema
+      run: |
+        echo "🔍 Валидация схемы датасета..."
+
+        # Схема для ChatML JSONL
+        cat > dataset_schema.json << 'EOF'
+        {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "system": {
+              "type": "string",
+              "description": "Системное сообщение с токеном oracle_sys"
+            },
+            "messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": ["user", "assistant"]
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["role", "content"]
+              },
+              "minItems": 1
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "difficulty": {
+              "type": "string",
+              "enum": ["easy", "medium", "hard"]
+            },
+            "source": {
+              "type": "string"
+            }
+          },
+          "required": ["system", "messages", "tags", "difficulty", "source"]
+        }
+        EOF
+
+        # Функция валидации файла
+        validate_file() {
+          local file="$1"
+          if [ ! -f "$file" ]; then
+            echo "⚠️  Файл не найден: $file"
+            return 0
+          fi
+
+          echo "  Проверка файла: $file"
+
+          # Проверка JSON валидности
+          if ! python3 -c "
+          import json, sys
+          try:
+            with open('$file', 'r', encoding='utf-8') as f:
+              for i, line in enumerate(f, 1):
+                data = json.loads(line.strip())
+                # Проверка наличия токенов идентичности
+                system = data.get('system', '')
+                if '<|oracle_sys|>' not in system:
+                  print(f'❌ Строка {i}: отсутствует <|oracle_sys|> в system')
+                  sys.exit(1)
+          except json.JSONDecodeError as e:
+            print(f'❌ Строка {i}: невалидный JSON - {e}')
+            sys.exit(1)
+          except Exception as e:
+            print(f'❌ Строка {i}: ошибка - {e}')
+            sys.exit(1)
+          " 2>/dev/null; then
+            echo "❌ Файл $file не прошёл валидацию"
+            return 1
+          fi
+
+          # Валидация схемы через jsonschema
+          if ! python3 -c "
+          import json
+          from jsonschema import validate, ValidationError
+
+          schema = json.load(open('dataset_schema.json'))
+          errors = []
+
+          with open('$file', 'r', encoding='utf-8') as f:
+            for i, line in enumerate(f, 1):
+              try:
+                data = json.loads(line.strip())
+                validate(instance=data, schema=schema)
+              except ValidationError as e:
+                errors.append(f'Строка {i}: {e.message}')
+              except Exception as e:
+                errors.append(f'Строка {i}: {str(e)}')
+
+          if errors:
+            print('\n'.join(errors))
+            exit(1)
+          " 2>/dev/null; then
+            echo "❌ Файл $file не прошёл схемную валидацию"
+            return 1
+          fi
+
+          echo "✅ Файл $file прошёл валидацию"
+          return 0
+        }
+
+        # Поиск и валидация JSONL файлов в датасетах
+        exit_code=0
+
+        # Валидация файлов в datasets/mix/
+        for file in datasets/mix/*.jsonl; do
+          if [ -f "$file" ]; then
+            if ! validate_file "$file"; then
+              exit_code=1
+            fi
+          fi
+        done
+
+        # Валидация файлов в data/ (если есть)
+        for file in data/**/*.jsonl; do
+          if [ -f "$file" ]; then
+            if ! validate_file "$file"; then
+              exit_code=1
+            fi
+          fi
+        done
+
+        if [ $exit_code -eq 0 ]; then
+          echo "✅ Все датасеты прошли валидацию схемы"
+        else
+          echo "❌ Некоторые датасеты не прошли валидацию"
+          exit 1
+        fi
+
+    - name: Check identity tokens presence
+      run: |
+        echo "🔍 Проверка наличия токенов идентичности..."
+
+        # Проверка системных токенов
+        if ! find datasets/ -name "*.jsonl" -exec grep -l "<|oracle_sys|>" {} \; | head -1 > /dev/null; then
+          echo "❌ Не найдены файлы с токеном <|oracle_sys|>"
+          exit 1
+        fi
+
+        # Подсчёт использований токенов
+        echo "📊 Статистика токенов идентичности:"
+        echo "  <|oracle_sys|>: $(find datasets/ -name "*.jsonl" -exec grep -c "<|oracle_sys|>" {} \; | awk '{sum+=$1} END {print sum}')"
+        echo "  <|oracle_intro|>: $(find datasets/ -name "*.jsonl" -exec grep -c "<|oracle_intro|>" {} \; | awk '{sum+=$1} END {print sum}')"
+        echo "  <|author|>: $(find datasets/ -name "*.jsonl" -exec grep -c "<|author|>" {} \; | awk '{sum+=$1} END {print sum}')"
+
+        echo "✅ Токены идентичности присутствуют во всех датасетах"

@@ -1,0 +1,51 @@
+# MATH Test Set Identifiers
+# Де-контаминация от MATH математических задач
+# Author: MagistrTheOne|Краснодар|2025
+
+# Идентификаторы задач из MATH test set
+# Используются для предотвращения контаминации обучающих данных
+
+MATH_001_algebra_linear_equations
+MATH_002_calculus_derivatives
+MATH_003_geometry_triangles
+MATH_004_number_theory_primes
+MATH_005_probability_combinations
+MATH_006_algebra_quadratic
+MATH_007_calculus_integrals
+MATH_008_geometry_circles
+MATH_009_number_theory_gcd
+MATH_010_probability_permutations
+
+# Паттерны для обнаружения MATH задач
+prove that [a-z]+ = [a-z]+
+show that [a-z]+ = [a-z]+
+find the derivative of
+determine the integral of
+solve the equation
+algebraic manipulation
+mathematical proof
+theorem application
+lemma usage
+corollary application
+
+# Продвинутые математические концепции
+differential equation
+linear algebra
+abstract algebra
+real analysis
+complex analysis
+topology
+number theory
+combinatorics
+graph theory
+mathematical logic
+
+# Ключевые слова для математических задач
+mathematical induction
+contradiction proof
+direct proof
+proof by cases
+counterexample
+mathematical reasoning
+step by step solution
+mathematical derivation

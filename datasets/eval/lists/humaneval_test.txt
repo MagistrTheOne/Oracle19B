@@ -1,0 +1,51 @@
+# HumanEval Test Set Identifiers
+# Де-контаминация от HumanEval кода
+# Author: MagistrTheOne|Краснодар|2025
+
+# Идентификаторы функций из HumanEval test set
+# Используются для предотвращения контаминации обучающих данных
+
+HumanEval_001_two_sum
+HumanEval_002_fizz_buzz
+HumanEval_003_longest_substring
+HumanEval_004_valid_parentheses
+HumanEval_005_reverse_integer
+HumanEval_006_palindrome_number
+HumanEval_007_roman_to_integer
+HumanEval_008_string_to_integer
+HumanEval_009_longest_common_prefix
+HumanEval_010_regular_expression
+
+# Паттерны для обнаружения HumanEval кода
+def two_sum
+def fizz_buzz
+def longest_substring_without_repeating
+def is_valid_parentheses
+def reverse_integer
+def is_palindrome_number
+def roman_to_int
+def my_atoi
+def longest_common_prefix
+def is_match_regex
+
+# Ключевые слова программирования
+def test_
+return True
+return False
+if __name__ == "__main__":
+assertEqual
+self.assertEqual
+test_case
+edge_case
+boundary_condition
+algorithm implementation
+coding problem solution
+
+# Специфичные для Python паттерны
+import unittest
+class Test
+def setUp
+def tearDown
+pytest.main
+python -m pytest
+test driven development
