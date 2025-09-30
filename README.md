@@ -30,11 +30,11 @@ model-index:
 [![Architecture](https://img.shields.io/badge/Architecture-MoE%20Transformer-blue.svg)](#model-architecture)
 
 **Проект:** Oracle — линейка собственных reasoning‑LLM корпорации M∞1  
-**Модель:** `Oracle850B-MoE` (850B параметров, **Mixture of Experts**)  
+**Модель:** `Oracle850B-MoE` (850B параметров, **Mixture of Experts** - 128 экспертов)  
 **Автор:** `MagistrTheOne|Краснодар|2025`  
 **Репозиторий:** [MagistrTheOne/oracle850b-moe](https://github.com/MagistrTheOne/oracle850b-moe)
 
-> **Oracle850B-MoE** — собственная архитектура M∞1 с общим объёмом ≈850B параметров (64 эксперта, top‑k=2, активные ≈110–130B). **OWN MODEL / NO EXTERNAL CHECKPOINTS**. Подготовка данных/инфры/конфигов; обучение запускается на внешнем кластере.
+> **Oracle850B-MoE** — собственная архитектура M∞1 с общим объёмом ≈850B параметров (128 экспертов, top‑k=2, активные ≈180–220B). **OWN MODEL / NO EXTERNAL CHECKPOINTS**. Подготовка данных/инфры/конфигов; обучение запускается на внешнем кластере.
 
 ## 🔒 Жёсткие правила
 
@@ -53,30 +53,30 @@ model-index:
   "arch": "decoder-only",
   "param_total": 850000000000,
   "moe": {
-    "experts": 64,
-    "expert_hidden_mult": 2.67,
+    "experts": 128,
+    "expert_hidden_mult": 4.0,
     "router": {"type": "topk", "k": 2, "load_balancing_loss": 0.01}
   },
-  "dense": {"d_model": 6144, "n_layers": 64, "n_heads": 48, "d_ff": 16384},
+  "dense": {"d_model": 8192, "n_layers": 96, "n_heads": 64, "d_ff": 24576},
   "activation": "swiglu",
   "rope_theta": 10000,
   "rotary_pct": 0.5,
   "rmsnorm_eps": 1e-5,
   "flash_attn": true,
   "kv_cache": true,
-  "vocab_size": 65536,
-  "max_seq_len": 8192,
+  "vocab_size": 131072,
+  "max_seq_len": 16384,
   "fp": {"train": "bf16", "infer": "auto"}
 }
 ```
 
-**Пояснение:** общее число параметров ≈850B за счёт пула экспертов; на токен активны 2 эксперта → «активные параметры» ~110–130B. Это даёт качество 100B‑класса при меньшем FLOPs.
+**Пояснение:** общее число параметров ≈850B за счёт пула экспертов; на токен активны 2 эксперта → «активные параметры» ~180–220B. Это даёт качество 200B‑класса при меньшем FLOPs.
 
 ### Специальные токены
 
 - `<|oracle_sys|>` — системный токен Oracle
 - `<|oracle_intro|>` — вводный токен Oracle  
-- `<|author|>` — токен автора (MagistrTheOne|Краснодар|2025)
+- `<|author|>` — токен автора (MagistrTheOne|Краснодар|2025|850B)
 - `<|endoftext|>` — конец текста
 - `<|pad|>` — паддинг
 - `<|unk|>` — неизвестный токен
@@ -111,33 +111,33 @@ obj://oracle-data/stats/...        # Статистика и отчёты
 ### Конфигурация обучения
 
 ```yaml
-seq_len: 8192
+seq_len: 16384
 micro_bsz: 1
-global_bsz: 2048
-grad_accum: 256
+global_bsz: 4096
+grad_accum: 512
 precision: bf16
 parallelism:
-  tensor: 8      # TP
-  pipeline: 8    # PP (стадии)
+  tensor: 16     # TP
+  pipeline: 12   # PP (стадии)
   sequence: true # SP (ops sharding)
 moe:
   top_k: 2
   capacity_factor: 1.25
   zloss: 0.001
 opt: adamw
-lr: 1.2e-4
-warmup_steps: 4000
-max_steps: 400000
+lr: 8e-5
+warmup_steps: 8000
+max_steps: 800000
 checkpoint:
   every_steps: 1000
-  keep_last: 5
+  keep_last: 3
   s3_mirror: true
 logging: json
 ```
 
 ### Требования к лаунчеру
 
-- Поддержка **TP/PP/SP** картирования по узлам/GPU
+- Поддержка **TP/PP/SP** картирования по узлам/GPU (16×TP, 12×PP)
 - **Elastic** рестарт, автоматический resume по последнему полноценно загруженному ckpt
 - Dry‑run: верифицируем раскладку без старта математики
 
@@ -185,7 +185,7 @@ logging: json
 
 ```bash
 HUGGINGFACE_TOKEN=hf_***
-HF_REPO=<user>/oracle850b
+HF_REPO=<user>/oracle850b-moe
 HF_TIER=free   # переключим на pro позже
 HF_HUB_ENABLE_HF_TRANSFER=0
 ```
@@ -196,8 +196,8 @@ HF_HUB_ENABLE_HF_TRANSFER=0
 
 ```bash
 # Клонировать репозиторий
-git clone https://github.com/MagistrTheOne/oracle850b.git
-cd oracle850b
+git clone https://github.com/MagistrTheOne/oracle850b-moe.git
+cd oracle850b-moe
 
 # Создать виртуальное окружение
 make venv
@@ -241,7 +241,7 @@ make push-hf
 ## 📁 Структура проекта
 
 ```
-oracle/
+oracle850b-moe/
 ├─ src/oracle/core/
 │  ├─ modeling/          # MoE архитектура
 │  ├─ tokenization/     # Собственный токенайзер
@@ -258,7 +258,7 @@ oracle/
 │  ├─ helm/           # Kubernetes чарты
 │  └─ scripts/         # Управляющие скрипты
 ├─ ci/                # CI/CD пайплайны
-├─ scripts/           # Утилиты
+├─ scripts/           # Утилиты и загрузка
 └─ checkpoints/       # Чекпойнты и промпты
 ```
 
@@ -284,9 +284,9 @@ make push-hf       # Загрузка в HF Hub
 
 ## 📞 Поддержка
 
-- **Автор**: MagistrTheOne|Краснодар|2025
-- **Репозиторий**: https://github.com/MagistrTheOne/oracle850b
-- **HF Hub**: https://huggingface.co/MagistrTheOne/oracle850b
+- **Автор**: MagistrTheOne|Краснодар|2025|850B
+- **Репозиторий**: https://github.com/MagistrTheOne/oracle850b-moe
+- **HF Hub**: https://huggingface.co/MagistrTheOne/oracle850b-moe
 
 ## 📄 Лицензия
 

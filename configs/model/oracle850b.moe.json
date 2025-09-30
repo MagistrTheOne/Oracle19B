@@ -3,8 +3,8 @@
   "arch": "decoder-only",
   "param_total": 850000000000,
   "moe": {
-    "experts": 64,
-    "expert_hidden_mult": 2.67,
+    "experts": 128,
+    "expert_hidden_mult": 4.0,
     "router": {
       "type": "topk",
       "k": 2,
@@ -12,10 +12,10 @@
     }
   },
   "dense": {
-    "d_model": 6144,
-    "n_layers": 64,
-    "n_heads": 48,
-    "d_ff": 16384
+    "d_model": 8192,
+    "n_layers": 96,
+    "n_heads": 64,
+    "d_ff": 24576
   },
   "activation": "swiglu",
   "rope_theta": 10000,
@@ -23,8 +23,8 @@
   "rmsnorm_eps": 1e-5,
   "flash_attn": true,
   "kv_cache": true,
-  "vocab_size": 65536,
-  "max_seq_len": 8192,
+  "vocab_size": 131072,
+  "max_seq_len": 16384,
   "fp": {
     "train": "bf16",
     "infer": "auto"

@@ -28,9 +28,9 @@ model-index:
 
 **Author**: MagistrTheOne|Krasnodar|Russia|2025|850B
 **Architecture**: Custom MoE (Mixture of Experts) Transformer
-**Total Parameters**: ~850 billion (64 experts, top-k=2 routing, ~110-130B active parameters per token)
-**Context Length**: 8,192 tokens
-**Vocabulary Size**: 65,536 tokens
+**Total Parameters**: ~850 billion (128 experts, top-k=2 routing, ~180-220B active parameters per token)
+**Context Length**: 16,384 tokens
+**Vocabulary Size**: 131,072 tokens
 **Precision**: BF16 training, auto inference
 
 ### Architecture Details
@@ -39,12 +39,12 @@ model-index:
 ```json
 {
   "model_type": "oracle_moe",
-  "vocab_size": 65536,
-  "max_seq_len": 8192,
-  "d_model": 6144,
-  "n_layers": 64,
-  "n_heads": 48,
-  "d_ff": 16384,
+  "vocab_size": 131072,
+  "max_seq_len": 16384,
+  "d_model": 8192,
+  "n_layers": 96,
+  "n_heads": 64,
+  "d_ff": 24576,
   "activation": "swiglu",
   "rope_theta": 10000,
   "rotary_pct": 0.5,
@@ -52,8 +52,8 @@ model-index:
   "flash_attn": true,
   "kv_cache": true,
   "moe": {
-    "experts": 64,
-    "expert_hidden_mult": 2.67,
+    "experts": 128,
+    "expert_hidden_mult": 4.0,
     "router": {
       "type": "topk",
       "k": 2,
@@ -68,8 +68,8 @@ model-index:
 ```
 
 #### Key Specifications
-- **Total Parameters**: ~850B (64 experts × ~13.3B per expert)
-- **Active Parameters**: ~110-130B per token (top-k=2 routing)
+- **Total Parameters**: ~850B (128 experts × ~6.6B per expert)
+- **Active Parameters**: ~180-220B per token (top-k=2 routing)
 - **Expert Capacity**: 1.25× load balancing factor
 - **Router Loss**: 0.01 load balancing coefficient
 
@@ -119,32 +119,32 @@ model-index:
 
 ### Infrastructure
 
-- **Hardware**: 8x GPU cluster with TP/PP/SP parallelism
+- **Hardware**: 16x GPU cluster with TP/PP/SP parallelism
 - **Framework**: Custom training pipeline with DeepSpeed ZeRO-3
 - **Precision**: bf16 mixed precision training
-- **Optimizer**: AdamW with learning rate 1.2e-4
-- **Batch Size**: Global batch size 2048 with gradient accumulation
+- **Optimizer**: AdamW with learning rate 8e-5
+- **Batch Size**: Global batch size 4096 with gradient accumulation
 
 ### Training Configuration
 
 ```yaml
-seq_len: 8192
+seq_len: 16384
 micro_bsz: 1
-global_bsz: 2048
-grad_accum: 256
+global_bsz: 4096
+grad_accum: 512
 precision: bf16
 parallelism:
-  tensor: 8
-  pipeline: 8
+  tensor: 16
+  pipeline: 12
   sequence: true
 ```
 
 ### Curriculum Learning
 
-- **Foundation Stage** (0-50k steps): Code, math, logic
-- **Reasoning Stage** (50k-150k steps): Advanced reasoning tasks
-- **Advanced Stage** (150k-300k steps): Complex problem solving
-- **Mastery Stage** (300k-400k steps): Expert-level tasks
+- **Foundation Stage** (0-100k steps): Code, math, logic
+- **Reasoning Stage** (100k-300k steps): Advanced reasoning tasks
+- **Advanced Stage** (300k-600k steps): Complex problem solving
+- **Mastery Stage** (600k-800k steps): Expert-level tasks
 
 ## Evaluation
 
@@ -158,8 +158,8 @@ parallelism:
 
 ### Performance Characteristics
 
-- **Efficiency**: ~110-130B active parameters per token
-- **Quality**: Comparable to 100B+ dense models
+- **Efficiency**: ~180-220B active parameters per token
+- **Quality**: Comparable to 200B+ dense models
 - **Speed**: Optimized inference with expert routing
 - **Memory**: Efficient memory usage through MoE architecture
 
@@ -170,7 +170,7 @@ parallelism:
 - **Computational Requirements**: Significant GPU resources needed
 - **Memory Usage**: High memory requirements for inference
 - **Expert Routing**: Potential for expert imbalance
-- **Context Length**: Limited to 8192 tokens
+- **Context Length**: Limited to 16384 tokens
 
 ### Content Limitations
 
@@ -181,9 +181,9 @@ parallelism:
 
 ### Usage Limitations
 
-- **Resource Intensive**: Requires substantial computational resources
+- **Resource Intensive**: Requires massive computational resources (16+ GPU cluster)
 - **Expertise Required**: Advanced setup and configuration needed
-- **Cost**: High inference costs due to model size
+- **Cost**: Very high inference costs due to model size
 - **Availability**: Model weights not yet publicly available
 
 ## Bias and Safety
@@ -206,16 +206,16 @@ parallelism:
 
 ### Training Impact
 
-- **Energy Consumption**: High energy usage during training
-- **Carbon Footprint**: Significant carbon emissions
+- **Energy Consumption**: Very high energy usage during training (16x GPU cluster)
+- **Carbon Footprint**: Significant carbon emissions (800k training steps)
 - **Resource Utilization**: Intensive GPU cluster usage
 - **Efficiency**: MoE architecture reduces active parameter usage
 
 ### Inference Impact
 
-- **Efficiency**: Lower computational cost per token than dense models
-- **Scalability**: Better scaling characteristics
-- **Resource Optimization**: Dynamic expert selection
+- **Efficiency**: Lower computational cost per token than dense models (180-220B active vs 850B total)
+- **Scalability**: Better scaling characteristics with expert routing
+- **Resource Optimization**: Dynamic expert selection (top-k=2)
 
 ## Technical Specifications
 
@@ -224,10 +224,10 @@ parallelism:
 ```json
 {
   "dense": {
-    "d_model": 6144,
-    "n_layers": 64,
-    "n_heads": 48,
-    "d_ff": 16384
+    "d_model": 8192,
+    "n_layers": 96,
+    "n_heads": 64,
+    "d_ff": 24576
   },
   "activation": "swiglu",
   "rope_theta": 10000,
@@ -242,7 +242,7 @@ parallelism:
 
 - `<|oracle_sys|>`: System token
 - `<|oracle_intro|>`: Introduction token
-- `<|author|>`: Author token (MagistrTheOne|Краснодар|2025)
+- `<|author|>`: Author token (MagistrTheOne|Krasnodar|Russia|2025|850B)
 - `<|endoftext|>`: End of text
 - `<|pad|>`: Padding token
 - `<|unk|>`: Unknown token
@@ -260,7 +260,7 @@ model = AutoModelForCausalLM.from_pretrained("MagistrTheOne/oracle850b")
 
 # Generate text
 inputs = tokenizer("Hello, I am Oracle850B", return_tensors="pt")
-outputs = model.generate(**inputs, max_length=100)
+outputs = model.generate(**inputs, max_length=200)
 print(tokenizer.decode(outputs[0]))
 ```
 
@@ -281,11 +281,11 @@ response = requests.post("http://localhost:8000/v1/chat/completions", json={
 
 ```bibtex
 @misc{oracle850b2025,
-  title={Oracle850B: A Mixture of Experts Language Model for Reasoning},
+  title={Oracle850B-MoE: A Mixture of Experts Language Model for Reasoning},
   author={MagistrTheOne},
   year={2025},
-  url={https://huggingface.co/MagistrTheOne/oracle850b},
-  note={Custom MoE architecture with 850B parameters}
+  url={https://huggingface.co/MagistrTheOne/oracle850b-moe},
+  note={Custom MoE architecture with 850B parameters (128 experts, 180-220B active)}
 }
 ```
 
