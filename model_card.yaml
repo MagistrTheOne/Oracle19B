@@ -1,0 +1,106 @@
+model_name: oracle850b-moe
+architecture: moe
+total_parameters: 850000000000
+active_parameters_per_token: 180000000000
+context_length: 16384
+vocabulary_size: 131072
+model_type: decoder-only
+license: other
+author: MagistrTheOne|Krasnodar|Russia|2025|850B
+repository: https://github.com/MagistrTheOne/oracle850b-moe
+huggingface_hub: https://huggingface.co/MagistrTheOne/oracle850b-moe
+
+architecture_details:
+  dense:
+    d_model: 8192
+    n_layers: 96
+    n_heads: 64
+    d_ff: 24576
+  moe:
+    experts: 128
+    expert_hidden_mult: 4.0
+    router:
+      type: topk
+      k: 2
+      load_balancing_loss: 0.01
+
+training_configuration:
+  seq_len: 16384
+  micro_bsz: 1
+  global_bsz: 4096
+  grad_accum: 512
+  precision: bf16
+  parallelism:
+    tensor: 16
+    pipeline: 12
+    sequence: true
+  moe:
+    top_k: 2
+    capacity_factor: 1.25
+    zloss: 0.001
+  optimizer: adamw
+  learning_rate: 8e-5
+  warmup_steps: 8000
+  max_steps: 800000
+
+special_tokens:
+  - <|oracle_sys|>
+  - <|oracle_intro|>
+  - <|author|>
+  - <|endoftext|>
+  - "<|pad|>"
+  - "<|unk|>"
+
+evaluation_benchmarks:
+  - name: GSM8K
+    type: text-generation
+    dataset_type: gsm8k
+    metric_type: exact_match
+    metric_name: GSM8K pass@1
+    value: null
+  - name: HumanEval
+    type: text-generation
+    dataset_type: openai_humaneval
+    metric_type: pass@1
+    metric_name: HumanEval pass@1
+    value: null
+
+usage_examples:
+  python_code: |
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+
+    tokenizer = AutoTokenizer.from_pretrained("MagistrTheOne/oracle850b-moe")
+    model = AutoModelForCausalLM.from_pretrained("MagistrTheOne/oracle850b-moe")
+
+    inputs = tokenizer("Hello, I am Oracle850B-MoE", return_tensors="pt")
+    outputs = model.generate(**inputs, max_length=200)
+    print(tokenizer.decode(outputs[0]))
+
+  api_example: |
+    import requests
+
+    response = requests.post("http://localhost:8000/v1/chat/completions", json={
+        "model": "oracle850b-moe",
+        "messages": [{"role": "user", "content": "Hello!"}],
+        "max_tokens": 200
+    })
+
+weights_information:
+  total_size: ~850B parameters
+  active_size: ~180-220B per token
+  format: safetensors
+  sharding: model-XXXXX-of-YYYYY.safetensors
+  index_file: model.safetensors.index.json
+  manifest_file: weights/manifest.json
+
+infrastructure_requirements:
+  minimum_gpus: 16
+  recommended_gpus: 32
+  memory_per_gpu: 80GB
+  training_time: ~800k steps
+  inference_memory: ~180GB for full model
+
+environmental_impact:
+  training_carbon_footprint: high
+  inference_efficiency: optimized
+  sustainability_notes: MoE architecture reduces active parameter usage

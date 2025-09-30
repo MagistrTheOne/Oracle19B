@@ -11,6 +11,11 @@ ACTIVATE := source $(VENV)/bin/activate
 PIP := $(VENV)/bin/pip
 PYTHON_VENV := $(VENV)/bin/python
 
+# Переменные для весов
+CKPT_DIR ?= checkpoints/oracle850b
+HF_TIER ?= free
+HF_HUB_ENABLE_HF_TRANSFER ?= 0
+
 # Цвета для вывода
 RED := \033[0;31m
 GREEN := \033[0;32m
@@ -29,6 +34,13 @@ help: ## Показать справку
 	@echo "  install      - Установка зависимостей"
 	@echo "  test         - Запуск тестов"
 	@echo "  clean        - Очистка временных файлов"
+	@echo ""
+	@echo "$(GREEN)Управление весами:$(NC)"
+	@echo "  weights-manifest - Генерация манифеста весов"
+	@echo "  weights-index    - Построение индекса весов"
+	@echo "  weights-verify   - Верификация весов"
+	@echo "  weights-upload   - Загрузка весов в HF Hub (Pro)"
+	@echo "  weights-mirror   - Зеркалирование в S3"
 	@echo ""
 	@echo "$(GREEN)Разработка:$(NC)"
 	@echo "  venv         - Создать виртуальное окружение"
@@ -249,3 +261,52 @@ status: ## Показать статус проекта
 	@echo "$(GREEN)CI/CD:$(NC)"
 	@test -f "ci/guard_external_models.yml" && echo "  ✅ Гвард внешних моделей" || echo "  ❌ Гвард внешних моделей"
 	@test -f "ci/push_to_hub.yml" && echo "  ✅ Push to Hub" || echo "  ❌ Push to Hub"
+	@echo ""
+	@echo "$(GREEN)Веса модели:$(NC)"
+	@test -d "scripts/weights" && echo "  ✅ Скрипты весов" || echo "  ❌ Скрипты весов"
+	@test -f "weights/manifest.json" && echo "  ✅ Манифест весов" || echo "  ❌ Манифест весов"
+	@test -f "model_card.yaml" && echo "  ✅ YAML карта модели" || echo "  ❌ YAML карта модели"
+
+# Управление весами модели
+.PHONY: weights-verify weights-index weights-manifest weights-upload weights-mirror
+
+weights-index: ## Построить/проверить индекс весов
+	@echo "$(BLUE)🏗️  Построение индекса весов...$(NC)"
+	$(PYTHON_VENV) scripts/weights/build_index.py --ckpt_dir $(CKPT_DIR)
+	@echo "$(GREEN)✅ Индекс весов готов$(NC)"
+
+weights-verify: ## Полная верификация весов
+	@echo "$(BLUE)🔍 Верификация весов модели...$(NC)"
+	$(PYTHON_VENV) scripts/weights/verify_index.py --ckpt_dir $(CKPT_DIR) --manifest weights/manifest.json
+	@echo "$(GREEN)✅ Верификация пройдена$(NC)"
+
+weights-manifest: ## Генерация манифеста весов
+	@echo "$(BLUE)📋 Генерация манифеста весов...$(NC)"
+	$(PYTHON_VENV) -c "
+	import json, glob, hashlib, os
+	p = os.getenv('CKPT_DIR', 'checkpoints/oracle850b')
+	f = sorted(glob.glob(f'{p}/model-*-of-*.safetensors'))
+	m = []
+	for x in f:
+		with open(x, 'rb') as file:
+			m.append({
+				'path': os.path.basename(x),
+				'size': os.path.getsize(x),
+				'sha256': hashlib.sha256(file.read(1024*1024)).hexdigest()
+			})
+	with open('weights/manifest.json', 'w') as manifest:
+		json.dump(m, manifest, indent=2)
+	"
+	@echo "$(GREEN)✅ Манифест весов создан$(NC)"
+
+weights-upload: ## Загрузка весов в HF Hub (Pro tier)
+	@echo "$(BLUE)📤 Загрузка весов в Hugging Face...$(NC)"
+	@test \"$(HF_TIER)\" = \"pro\" || (echo \"❌ Требуется HF_TIER=pro\" && exit 1)
+	@test \"$(HF_HUB_ENABLE_HF_TRANSFER)\" = \"1\" || (echo \"❌ Требуется HF_HUB_ENABLE_HF_TRANSFER=1\" && exit 1)
+	$(PYTHON_VENV) scripts/weights/hf_upload_weights.py
+	@echo "$(GREEN)✅ Веса загружены в HF Hub$(NC)"
+
+weights-mirror: ## Зеркалирование весов в S3
+	@echo "$(BLUE)🔄 Зеркалирование весов в S3...$(NC)"
+	$(PYTHON_VENV) scripts/weights/s3_mirror.py --ckpt_dir $(CKPT_DIR)
+	@echo "$(GREEN)✅ Зеркалирование завершено$(NC)"
