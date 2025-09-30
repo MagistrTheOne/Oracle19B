@@ -4,7 +4,7 @@
   "param_total": 850000000000,
   "moe": {
     "experts": 128,
-    "expert_hidden_mult": 4.0,
+    "expert_hidden_mult": 14.2,
     "router": {
       "type": "topk",
       "k": 2,
