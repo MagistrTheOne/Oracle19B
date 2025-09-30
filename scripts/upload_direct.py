@@ -7,36 +7,38 @@ Author: MagistrTheOne|Краснодар|2025
 
 import os
 import sys
+import argparse
 from pathlib import Path
 from huggingface_hub import HfApi, login
 
 
-def upload_direct():
+def upload_direct(token=None):
     """Прямая загрузка с токеном"""
-    print("🚀 Oracle850B Direct Upload")
+    print("Oracle850B Direct Upload")
     print("=" * 40)
-    
-    # Токен из переменной окружения
-    token = os.getenv("HF_TOKEN")
+
+    # Токен из параметра или переменной окружения
     if not token:
-        print("❌ HF_TOKEN не установлен")
-        print("💡 Установите: set HF_TOKEN=your_token_here")
+        token = os.getenv("HF_TOKEN")
+    if not token:
+        print("ERROR: HF_TOKEN not set")
+        print("HINT: Set HF_TOKEN environment variable or pass as --token")
         return False
 
     repo_id = "MagistrTheOne/oracle850b-moe"
-    
+
     try:
         # Логин
         login(token=token)
-        print("✅ Успешный логин в HF Hub")
-        
+        print("SUCCESS: Успешный логин в HF Hub")
+
         # API
         api = HfApi(token=token)
-        
+
         # Проверка пользователя
         user_info = api.whoami()
-        print(f"✅ Пользователь: {user_info['name']}")
-        
+        print(f"SUCCESS: Пользователь: {user_info['name']}")
+
         # Создание репозитория
         try:
             api.create_repo(
@@ -45,10 +47,10 @@ def upload_direct():
                 private=False,
                 exist_ok=True
             )
-            print(f"✅ Репозиторий создан: {repo_id}")
+            print(f"SUCCESS: Репозиторий создан: {repo_id}")
         except Exception as e:
-            print(f"ℹ️  Репозиторий уже существует: {e}")
-        
+            print(f"INFO: Репозиторий уже существует: {e}")
+
         # Загрузка файлов
         files_to_upload = [
             ("README.md", "README.md"),
@@ -62,10 +64,10 @@ def upload_direct():
             ("checkpoints/oracle850b/default_intro.txt", "default_intro.txt"),
             ("checkpoints/oracle850b/default_system.txt", "default_system.txt")
         ]
-        
-        print("\n📋 Загрузка файлов:")
+
+        print("\nUPLOAD: Загрузка файлов:")
         success_count = 0
-        
+
         for local_path, repo_path in files_to_upload:
             if Path(local_path).exists():
                 try:
@@ -75,19 +77,19 @@ def upload_direct():
                         repo_id=repo_id,
                         repo_type="model"
                     )
-                    print(f"✅ {local_path} → {repo_path}")
+                    print(f"SUCCESS: {local_path} -> {repo_path}")
                     success_count += 1
                 except Exception as e:
-                    print(f"❌ {local_path}: {e}")
+                    print(f"ERROR: {local_path}: {e}")
             else:
-                print(f"⚠️  Файл не найден: {local_path}")
-        
+                print(f"WARNING: Файл не найден: {local_path}")
+
         # Загрузка токенайзера
         tokenizer_dir = Path("checkpoints/oracle850b/tokenizer")
         if tokenizer_dir.exists():
-            print(f"\n🔤 Загрузка токенайзера:")
+            print(f"\nTOKENIZER: Загрузка токенайзера:")
             tokenizer_files = ["tokenizer.json", "tokenizer_config.json", "special_tokens_map.json"]
-            
+
             for file_name in tokenizer_files:
                 file_path = tokenizer_dir / file_name
                 if file_path.exists():
@@ -98,23 +100,28 @@ def upload_direct():
                             repo_id=repo_id,
                             repo_type="model"
                         )
-                        print(f"✅ tokenizer/{file_name}")
+                        print(f"SUCCESS: tokenizer/{file_name}")
                         success_count += 1
                     except Exception as e:
-                        print(f"❌ tokenizer/{file_name}: {e}")
+                        print(f"ERROR: tokenizer/{file_name}: {e}")
                 else:
-                    print(f"⚠️  Файл не найден: {file_name}")
-        
-        print(f"\n📊 Загружено файлов: {success_count}")
-        print(f"🔗 Репозиторий: https://huggingface.co/{repo_id}")
-        
+                    print(f"WARNING: Файл не найден: {file_name}")
+
+        print(f"\nSTATS: Загружено файлов: {success_count}")
+        print(f"LINK: Репозиторий: https://huggingface.co/{repo_id}")
+
         return True
-        
+
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"ERROR: {e}")
         return False
 
 
 if __name__ == "__main__":
-    success = upload_direct()
+    parser = argparse.ArgumentParser(description="Upload Oracle850B files to Hugging Face")
+    parser.add_argument("--token", type=str, help="Hugging Face token")
+    parser.add_argument("--repo", type=str, default="MagistrTheOne/oracle850b-moe", help="Repository ID")
+    args = parser.parse_args()
+
+    success = upload_direct(token=args.token)
     sys.exit(0 if success else 1)

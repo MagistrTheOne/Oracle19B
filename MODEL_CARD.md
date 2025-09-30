@@ -20,34 +20,58 @@ model-index:
         metrics: [{type: pass@1, name: HumanEval pass@1, value: null, verified: false}]
 ---
 
-# Oracle850B (MoE) Model Card
+# Oracle850B-MoE Model Card
 
 ## Model Description
 
-**Oracle850B** is a Mixture of Experts (MoE) language model with approximately 850 billion parameters, developed by **MagistrTheOne|Краснодар|2025**. The model uses a custom architecture optimized for reasoning tasks with efficient parameter utilization through expert routing.
+**Oracle850B-MoE** is a Mixture of Experts (MoE) language model with approximately 850 billion parameters, developed by **MagistrTheOne|Krasnodar|Russia|2025|850B**. This is a custom architecture optimized for reasoning tasks with efficient parameter utilization through expert routing.
 
-### Key Features
+**Author**: MagistrTheOne|Krasnodar|Russia|2025|850B
+**Architecture**: Custom MoE (Mixture of Experts) Transformer
+**Total Parameters**: ~850 billion (64 experts, top-k=2 routing, ~110-130B active parameters per token)
+**Context Length**: 8,192 tokens
+**Vocabulary Size**: 65,536 tokens
+**Precision**: BF16 training, auto inference
 
-- **Architecture**: Decoder-only Transformer with MoE
-- **Total Parameters**: ~850B (64 experts)
-- **Active Parameters**: ~110-130B (top-k=2 routing)
-- **Context Length**: 8192 tokens
-- **Vocabulary Size**: 65536
-- **Precision**: bf16 training, auto inference
+### Architecture Details
 
-### MoE Configuration
-
+#### MoE (Mixture of Experts) Configuration
 ```json
 {
-  "experts": 64,
-  "expert_hidden_mult": 2.67,
-  "router": {
-    "type": "topk",
-    "k": 2,
-    "load_balancing_loss": 0.01
+  "model_type": "oracle_moe",
+  "vocab_size": 65536,
+  "max_seq_len": 8192,
+  "d_model": 6144,
+  "n_layers": 64,
+  "n_heads": 48,
+  "d_ff": 16384,
+  "activation": "swiglu",
+  "rope_theta": 10000,
+  "rotary_pct": 0.5,
+  "rmsnorm_eps": 1e-5,
+  "flash_attn": true,
+  "kv_cache": true,
+  "moe": {
+    "experts": 64,
+    "expert_hidden_mult": 2.67,
+    "router": {
+      "type": "topk",
+      "k": 2,
+      "load_balancing_loss": 0.01
+    }
+  },
+  "fp": {
+    "train": "bf16",
+    "infer": "auto"
   }
 }
 ```
+
+#### Key Specifications
+- **Total Parameters**: ~850B (64 experts × ~13.3B per expert)
+- **Active Parameters**: ~110-130B per token (top-k=2 routing)
+- **Expert Capacity**: 1.25× load balancing factor
+- **Router Loss**: 0.01 load balancing coefficient
 
 ## Intended Use
 
@@ -267,10 +291,12 @@ response = requests.post("http://localhost:8000/v1/chat/completions", json={
 
 ## Contact
 
-- **Author**: MagistrTheOne|Краснодар|2025
-- **Repository**: https://github.com/MagistrTheOne/oracle850b
-- **Hugging Face**: https://huggingface.co/MagistrTheOne/oracle850b
-- **Email**: [Contact information to be provided]
+- **Author**: MagistrTheOne|Krasnodar|Russia|2025|850B
+- **Repository**: https://github.com/MagistrTheOne/oracle850b-moe
+- **Hugging Face**: https://huggingface.co/MagistrTheOne/oracle850b-moe
+- **Location**: Krasnodar, Russia
+- **Year**: 2025
+- **Model Size**: 850B parameters
 
 ## License
 
